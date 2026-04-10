@@ -249,23 +249,20 @@ bot.action(/pay_(.+)/, async (ctx) => {
   await ctx.answerCbQuery()
 })
 
-// ================= TEXT FLOW (deposit/withdrawal) =================
+// ================= TEXT FLOW =================
 bot.on("text", async (ctx) => {
   const session = getSession(ctx.from.id)
   const userId = ctx.from.id
   const text = ctx.message.text
 
-  // Helper to check admin menu commands
   const isAdminMenuCmd = (t) => ADMIN_IDS.includes(userId) && ["Deposit Problems","Withdrawal Problems","Broadcast","Users","🔙 Main Menu"].some(cmd => t.includes(cmd))
 
-  // Clear admin session if menu command pressed during another state
   if (ADMIN_IDS.includes(userId) && session.state !== null && isAdminMenuCmd(text)) {
     console.log(`Clearing admin state (${session.state}) due to menu command.`)
     clearSession(userId)
-    // Re-enter this handler with cleared session – we'll just re-run the logic below
   }
 
-  // ===== ADMIN BROADCAST =====
+  // ADMIN BROADCAST
   if (ADMIN_IDS.includes(userId) && session.state === "admin_broadcast_message") {
     const category = session.broadcastCategory
     let targetUserIds = []
@@ -289,7 +286,7 @@ bot.on("text", async (ctx) => {
     return
   }
 
-  // ===== ADMIN REPLY =====
+  // ADMIN REPLY
   if (ADMIN_IDS.includes(userId) && session.state === "admin_reply") {
     const targetUserId = session.data.targetUserId
     if (!targetUserId) {
@@ -308,7 +305,7 @@ bot.on("text", async (ctx) => {
     return
   }
 
-  // ===== BINANCE FLOW =====
+  // BINANCE FLOW
   if (session.state === "waiting_binance_player_id") {
     session.data.gameUserId = text
     session.state = "waiting_binance_uid"
@@ -328,7 +325,7 @@ bot.on("text", async (ctx) => {
     return
   }
 
-  // ===== MONEYGO FLOW =====
+  // MONEYGO FLOW
   if (session.state === "waiting_moneygo_player_id") {
     session.data.gameUserId = text
     session.state = "waiting_moneygo_number"
@@ -348,7 +345,7 @@ bot.on("text", async (ctx) => {
     return
   }
 
-  // ===== SUPPORT FLOW (original) =====
+  // SUPPORT FLOW
   if (session.state === "waiting_game_user_id") {
     session.data.gameUserId = text
     session.state = "waiting_phone_number"
@@ -386,7 +383,7 @@ bot.on("text", async (ctx) => {
     return
   }
 
-  // ===== ADMIN MENU COMMANDS =====
+  // ADMIN MENU COMMANDS
   if (ADMIN_IDS.includes(userId) && session.state === null) {
     if (text.includes("Deposit Problems")) {
       showTicketList(ctx, "deposit", 0)
@@ -415,7 +412,7 @@ bot.on("text", async (ctx) => {
     return
   }
 
-  // ===== USER REPLY TO ADMIN =====
+  // USER REPLY TO ADMIN
   if (!ADMIN_IDS.includes(userId) && !session.state) {
     const adminId = userLastAdmin[userId]
     if (adminId) {
@@ -502,7 +499,6 @@ bot.on(["photo", "video"], async (ctx) => {
   const session = getSession(ctx.from.id)
   const userId = ctx.from.id
 
-  // Admin broadcast file
   if (ADMIN_IDS.includes(userId) && session.state === "admin_broadcast_message") {
     const category = session.broadcastCategory
     const caption = ctx.message.caption || ""
@@ -530,7 +526,6 @@ bot.on(["photo", "video"], async (ctx) => {
     return
   }
 
-  // User file upload for ticket
   if (!ADMIN_IDS.includes(userId) && session.state === "waiting_file") {
     if (ctx.message.photo) {
       session.data.fileId = ctx.message.photo.pop().file_id
